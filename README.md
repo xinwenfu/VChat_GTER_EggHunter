@@ -40,7 +40,8 @@ This section covers the compilation process and use of the VChat Server. We incl
 </details>
 
 ### Mingw/GCC
-
+<details>
+	
    1. Compile VChat and its dependencies if they have not already been compiled. This is done with mingw.
       1. Create the essfunc object File.
 		```powershell
@@ -64,6 +65,8 @@ This section covers the compilation process and use of the VChat Server. We incl
          * ```vchat.c```: The source file is "vchat.c".
          * ```-o vchat.exe```: The output file will be the executable "vchat.exe".
          * ```-lws2_32 ./libessfunc.a```: Link the executable against the import library "libessfunc.a", enabling it to use the DLL "essfunc.dll".
+</details>
+
 ## Exploit Process
 The following sections cover the process that should (Or may) be followed when performing this exploitation on the VChat application. It should be noted that the [**Dynamic Analysis**](#dynamic-analysis) section makes certain assumptions primarily that we have access to the binary that may not be realistic; however, the enumeration and exploitation of generic Windows and Linux servers in order to procure this falls out of the scope of this document.
 
