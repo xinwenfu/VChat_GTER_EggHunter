@@ -176,19 +176,18 @@ python boofuzz-vchat-GTER.py
 I do feel it is a bit hard to identify which string actually crashes VChat. It appears even after VChat crashes, its port is still open, maybe because it takes time for the OS to clean the crashed VChat. In this case, it appears two test cases may crash VChat. Take a guess then and try!
 
 #### Further Analysis
-1. Generate a Cyclic Pattern.
-
-We do this so we can tell *where exactly* the return address is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the register which will be a subset of the generated string after a crash, we can tell where in memory the return address is stored.
+1. **Generate a Cyclic Pattern**. We do this so we can tell *where exactly* the return address is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the register which will be a subset of the generated string after a crash, we can tell where in memory the return address is stored.
 	```sh
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 400
 	```
 	* This will allow us to inject a new return address at that location.
 	* The value 400 is chosen due to previous experience and knowledge about the function that handles this command, continuing to use 5000 is perfectly fine too!
-4. Modify your exploit code to reflect the [exploit1.py](./SourceCode/exploit1.py) script and run it to inject a cyclic pattern into the Vulnserver program's stack and observe the EIP register.
+ 
+2. Modify your exploit code---[exploit1.py](./SourceCode/exploit1.py) script---and run it to inject a cyclic pattern into the Vulnserver program's stack and observe the EIP register.
 
 	<img src="Images/I9.png" width=600>
 
-5. Notice that the EIP register reads `38654137` in this case, we can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the return address's offset based on our search string's position in the pattern.
+3. Notice that the EIP register reads `38654137` in this case, we can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the return address's offset based on our search string's position in the pattern.
 	```sh
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 38654137
 	```
