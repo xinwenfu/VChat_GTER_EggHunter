@@ -40,14 +40,15 @@ This section covers the compilation process and use of the VChat Server. We incl
 </details>
 
 ### Mingw/GCC
-
-   1. Compile VChat and its dependencies if they have not already been compiled. This is done with mingw.
-      1. Create the essfunc object File.
+<details>
+	
+Compile VChat and its dependencies if they have not already been compiled. This is done with mingw.
+1. Create the essfunc object File.
 		```powershell
 		# Compile Essfunc Object file
 		$ gcc.exe -c essfunc.c
 		```
-      2. Create the [DLL](https://learn.microsoft.com/en-us/troubleshoot/windows-client/deployment/dynamic-link-library) containing functions that will be used by the VChat.
+2. Create the [DLL](https://learn.microsoft.com/en-us/troubleshoot/windows-client/deployment/dynamic-link-library) containing functions that will be used by the VChat.
 		```powershell
 		# Create a DLL with a static (preferred) base address of 0x62500000
 		$ gcc.exe -shared -o essfunc.dll -Wl,--out-implib=libessfunc.a -Wl,--image-base=0x62500000 essfunc.o
@@ -56,7 +57,8 @@ This section covers the compilation process and use of the VChat Server. We incl
          * ```-Wl,--out-implib=libessfunc.a```: We tell the linker to generate generate a import library "libessfunc.a" [2].
          * ```-Wl,--image-base=0x62500000```: We specify the [Base Address](https://learn.microsoft.com/en-us/cpp/build/reference/base-base-address?view=msvc-170) as ```0x62500000``` [3].
          * ```essfunc.o```: We build the DLL based off of the object file "essfunc.o"
-      3. Compile the VChat application.
+
+3. Compile the VChat application.
 		```powershell
 		# Compile and Link VChat
 		$ gcc.exe vchat.c -o vchat.exe -lws2_32 ./libessfunc.a
@@ -64,7 +66,8 @@ This section covers the compilation process and use of the VChat Server. We incl
          * ```vchat.c```: The source file is "vchat.c".
          * ```-o vchat.exe```: The output file will be the executable "vchat.exe".
          * ```-lws2_32 ./libessfunc.a```: Link the executable against the import library "libessfunc.a", enabling it to use the DLL "essfunc.dll".
-
+</details>
+	
 ## Exploit Process
 The following sections cover the process that should (Or may) be followed when performing this exploitation on the VChat application. It should be noted that the [**Dynamic Analysis**](#dynamic-analysis) section makes certain assumptions primarily that we have access to the binary that may not be realistic; however, the enumeration and exploitation of generic Windows and Linux servers in order to procure this falls out of the scope of this document.
 
