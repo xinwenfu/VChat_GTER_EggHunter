@@ -183,22 +183,18 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 	* This will allow us to inject a new return address at that location.
 	* The value 400 is chosen due to previous experience and knowledge about the function that handles this command, continuing to use 5000 is perfectly fine too!
  
-2. Modify your exploit code&mdash;[exploit1.py](./SourceCode/exploit1.py) script&mdash;and run it to inject a cyclic pattern into the Vulnserver program's stack and observe the EIP register.
+2. **Modify your exploit code**&mdash;[exploit1.py](./SourceCode/exploit1.py)&mdash;and run it to inject a cyclic pattern into VChat's stack and observe the EIP register, whcih contains 4 bytes from the cyclic pattern such as *41356541*.
 
-	<img src="Images/I9.png" width=600>
-
-3. Notice that the EIP register reads `38654137` in this case, we can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the return address's offset based on our search string's position in the pattern.
+3. We can **use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the return address's offset** based on our search string's position in the pattern.
 	```sh
-	$ /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 38654137
+	/usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 41356541
 	```
-	* This will return an offset as shown below
+	* This will return an offset such as *135*.
 
-	<img src="Images/I10.png" width=600>
-
-6. Now modify the exploit program to reflect the code in the [exploit2.py](./SourceCode/exploit2.py) script and run the exploit against VChat.
+4. Now modify the exploit program&mdash;[exploit2.py](./SourceCode/exploit2.py)&mdash;and run the exploit against VChat.
    * We do this to validate that we have the correct offset for the return address!
 
-		<img src="Images/I11.png" width=600>
+		<img src="Images/exploit2.png" width=600>
 
 		* See that the EIP is a series of the value `0x42` this is a series of Bs. This tells us that we can write an address to that location in order to change the control flow of the target program.
 		* *Note:* It took a few runs for this to work and update on Immunity Debugger within the VirtualBox VM.
