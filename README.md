@@ -183,7 +183,7 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 	* This will allow us to inject a new return address at that location.
 	* The value 400 is chosen due to previous experience and knowledge about the function that handles this command, continuing to use 5000 is perfectly fine too!
  
-2. Modify your exploit code---[exploit1.py](./SourceCode/exploit1.py) script---and run it to inject a cyclic pattern into the Vulnserver program's stack and observe the EIP register.
+2. Modify your exploit code&mdash;[exploit1.py](./SourceCode/exploit1.py) script&mdash;and run it to inject a cyclic pattern into the Vulnserver program's stack and observe the EIP register.
 
 	<img src="Images/I9.png" width=600>
 
