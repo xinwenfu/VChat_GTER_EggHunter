@@ -27,6 +27,7 @@ EggHunters rely on system calls or exception-handing mechanisms that are specifi
 This section covers the compilation process and use of the VChat Server. We include instructions for both the original VChat code, which was compiled with MinGW and GCC on Windows, and the newly modified code, which can be compiled with the Visual Studio C++ compiler.
 
 ### Visual Studio
+<details>
 1. Open the [Visual Studio project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/DLL/Essfun) for the *essfunc* DLL.
 2. Build the project, as this contains inline assembly the target DLL file must be compiled as a x86 DLL (32-bits).
 3. Copy the Resulting DLL from the *Debug* folder in the [Essfunc Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/DLL/Essfun/Debug) into the *Debug* folder in the [VChat Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/EXE/VChat/Debug)
@@ -35,6 +36,8 @@ This section covers the compilation process and use of the VChat Server. We incl
 
 4. Open the [Visual Studio project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/EXE/VChat) for the *VChat* EXE.
 5. Build the Project; our executable will be in the *Debug* folder. You can then launch the executable!
+</details>
+
 ### Mingw/GCC
 
    1. Compile VChat and its dependencies if they have not already been compiled. This is done with mingw.
