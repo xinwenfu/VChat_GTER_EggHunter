@@ -6,7 +6,7 @@
 > - Offsets may vary depending on what version of VChat was compiled, the version of the compiler used, and any compiler flags applied during the compilation process.
 ___
 
-Not all buffer overflows are created equal. In this exploit, we will be faced with an execution environment with very limited space on the buffer once the overflow has occurred. To circumnavigate this, we will use a technique known as [EggHunting](https://www.hick.org/code/skape/papers/egghunt-shellcode.pdf). A [common technique](https://www.rapid7.com/blog/post/2012/07/06/an-example-of-egghunting-to-exploit-cve-2012-0124/) where the attacker places a small piece of shellcode into the execution environment specifically onto the stack which then proceeds to scan the virtual memory allocated to the process for a *tag*. This *tag* is used to identify where the rest of the malicious shellcode is located and allows us to then jump to that location, continuing execution but now of our larger malicious shellcode segment.
+Not all buffer overflows are created equal. In this exploit, we will be faced with an execution environment with very limited space on the buffer once the overflow has occurred. To circumnavigate this, we will use a technique known as [EggHunting](https://www.hick.org/code/skape/papers/egghunt-shellcode.pdf), a [common technique](https://www.rapid7.com/blog/post/2012/07/06/an-example-of-egghunting-to-exploit-cve-2012-0124/): the attacker places a small piece of shellcode into the execution environment specifically onto the stackl; this specific shellcode then proceeds to scan the virtual memory allocated to the process for a *tag*. This *tag* is used to identify where another long malicious shellcode (e.g., a long one) is located and then jumps to that location, continuing execution of the long malicious shellcode.
 
 We use this technique, as it allows us to circumnavigate space constraints on the stack by placing the small egg-hunting shellcode onto the stack, with the much larger exploit placed into another segment of memory in the program, such as the [heap](https://learn.microsoft.com/en-us/cpp/mfc/memory-management-heap-allocation?view=msvc-170) or another stack segment where we have sufficient space.
 
@@ -74,7 +74,7 @@ Compile VChat and its dependencies if they have not already been compiled. This 
 We want to understand the VChat program and how it works in order to effectively exploit it. Before diving into the specific of how VChat behaves the most important information for us is the IP address of the Windows VM that runs VChat and the port number that VChat runs on.
 
 1. **Windows** Launch the VChat application.
-	* Click on the VChat Icon in File Explorer when it is in the same directory as the essfunc DLL.
+	* Click on the VChat Icon in *File Explorer* when it is in the same directory as the essfunc DLL.
 	* You can also use the simple [VChatGUI](https://github.com/daintyjet/VChatGUI) program to launch the executable.
 2. (Optional) **Linux**: Run NMap.
 	```sh
@@ -107,7 +107,8 @@ We want to understand the VChat program and how it works in order to effectively
    * Now, trying every possible combination of strings would get quite tiresome, so we can use the technique of *fuzzing* to automate this process, as discussed later in the exploitation section.
 
 ### Dynamic Analysis
-This exploitation phase is where we launch the target application or binary and examine its behavior based on the input we provide. We can do this both using automated fuzzing tools and manually generated inputs. We do this to discover how we can construct a payload to modify VChat's behavior. We want to construct an attack string as follows: `padding-bytes|address-to-overwrite-return-address|shell-code`, where | means concatenation. Therefore, we need to know how many bytes are required in order to properly pad and align our overflow to overwrite critical sections of data.
+This exploitation phase is where we launch the target application or binary and examine its behavior based on the input we provide. We can do this both using automated fuzzing tools and manually generated inputs. We do this to discover how we can construct a payload to modify VChat's behavior. We want to construct an attack string as follows: `egghunter-shellcode|address-to-overwrite-return-address`, where | means concatenation. Therefore, we need to know how many bytes are required in order to properly pad and align our overflow to overwrite critical sections of data.
+
 #### Launch VChat
 1. Open Immunity Debugger
 
