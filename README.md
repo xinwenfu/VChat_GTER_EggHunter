@@ -176,17 +176,19 @@ python boofuzz-vchat-GTER.py
 I do feel it is a bit hard to identify which string actually crashes VChat. It appears even after VChat crashes, its port is still open, maybe because it takes time for the OS to clean the crashed VChat. In this case, it appears two test cases may crash VChat. Take a guess then and try!
 
 #### Further Analysis
-1. Generate a Cyclic Pattern. We do this so we can tell *where exactly* the return address is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the register which will be a subset of the generated string after a crash, we can tell where in memory the return address is stored.
+1. Generate a Cyclic Pattern.
+
+We do this so we can tell *where exactly* the return address is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the register which will be a subset of the generated string after a crash, we can tell where in memory the return address is stored.
 	```sh
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 400
 	```
 	* This will allow us to inject a new return address at that location.
 	* The value 400 is chosen due to previous experience and knowledge about the function that handles this command, continuing to use 5000 is perfectly fine too!
-2. Modify your exploit code to reflect the [exploit1.py](./SourceCode/exploit1.py) script and run it to inject a cyclic pattern into the Vulnserver program's stack and observe the EIP register.
+4. Modify your exploit code to reflect the [exploit1.py](./SourceCode/exploit1.py) script and run it to inject a cyclic pattern into the Vulnserver program's stack and observe the EIP register.
 
 	<img src="Images/I9.png" width=600>
 
-3. Notice that the EIP register reads `38654137` in this case, we can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the return address's offset based on our search string's position in the pattern.
+5. Notice that the EIP register reads `38654137` in this case, we can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the return address's offset based on our search string's position in the pattern.
 	```sh
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 38654137
 	```
@@ -194,7 +196,7 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 
 	<img src="Images/I10.png" width=600>
 
-4. Now modify the exploit program to reflect the code in the [exploit2.py](./SourceCode/exploit2.py) script and run the exploit against VChat.
+6. Now modify the exploit program to reflect the code in the [exploit2.py](./SourceCode/exploit2.py) script and run the exploit against VChat.
    * We do this to validate that we have the correct offset for the return address!
 
 		<img src="Images/I11.png" width=600>
@@ -202,17 +204,17 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 		* See that the EIP is a series of the value `0x42` this is a series of Bs. This tells us that we can write an address to that location in order to change the control flow of the target program.
 		* *Note:* It took a few runs for this to work and update on Immunity Debugger within the VirtualBox VM.
 
-5. (Optional) Use the [mona.py](https://github.com/corelan/mona) python program within Immunity Debugger to determine useful information about our target process. While the *cyclic pattern* from [exploit1.py](./SourceCode/exploit1.py) is in memory we can run the command ```!mona findmsp``` in the command line at the bottom of the Immunity Debugger GUI. **Note:** We must have sent the cyclic pattern and it must be present in the stack frame at the time we run this command!
+7. (Optional) Use the [mona.py](https://github.com/corelan/mona) python program within Immunity Debugger to determine useful information about our target process. While the *cyclic pattern* from [exploit1.py](./SourceCode/exploit1.py) is in memory we can run the command ```!mona findmsp``` in the command line at the bottom of the Immunity Debugger GUI. **Note:** We must have sent the cyclic pattern and it must be present in the stack frame at the time we run this command!
 
 	<img src="Images/I12.png" width=600>
 
       * We can see that the offset (Discovered with [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) earlier) is at the byte offset of `143`, the ESP has `23` bytes after jumping to the address in the ESP register, and the EBP is at the byte offset `139`.
       * The most important thing we learned is that we have `24` bytes to work with! This is not much...  However, we know there are `144` Bytes of **free space** from the **start** to the **end** of our **buffer**!
-6. Open the `Executable Modules` window from the **views** tab in Immunity Debugger. This allows us to see the memory offsets of each dependency VChat uses. This will help inform us which `jmp esp` instruction we should pick, since we want to avoid any *Windows dynamic libraries* since their base addresses may vary between executions and Windows systems.
+8. Open the `Executable Modules` window from the **views** tab in Immunity Debugger. This allows us to see the memory offsets of each dependency VChat uses. This will help inform us which `jmp esp` instruction we should pick, since we want to avoid any *Windows dynamic libraries* since their base addresses may vary between executions and Windows systems.
 
 	<img src="Images/I13.png" width=600>
 
-7. Use the command `!mona jmp -r esp -cp nonull -o` in the Immunity Debugger's GUI command line to find some `jmp esp` instructions.
+9. Use the command `!mona jmp -r esp -cp nonull -o` in the Immunity Debugger's GUI command line to find some `jmp esp` instructions.
 
 	<img src="Images/I14.png" width=600>
 
@@ -225,7 +227,7 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 
       * We can see there are nine possible `jmp esp` instructions in the essfunc DLL that we can use, any of the displayed options should work. We will use the last one, `0x6250151e`.
 
-8. Modify your exploit program to reflect the [exploit3.py](./SourceCode/exploit3.py) script, we use this to verify that the `jmp esp` address we inject works.
+10. Modify your exploit program to reflect the [exploit3.py](./SourceCode/exploit3.py) script, we use this to verify that the `jmp esp` address we inject works.
    1. Click on the black button highlighted below, and enter the address we decided in the previous step.
 
 		<img src="Images/I16.png" width=600>
