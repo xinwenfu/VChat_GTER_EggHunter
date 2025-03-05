@@ -287,7 +287,7 @@ As we noted in the previous section, there are **only** *24* bytes of free space
 
 	<img src="Images/I21.png" width=600>
 
-4. We now want to overwrite the start of the `B` buffer with a `jmp` instruction to continue execution by jumping to the start of our buffer. Right-click the location and click assemble as shown below.
+4. We now want to overwrite the start of the `C` buffer with a `jmp` instruction to continue execution by jumping to the start of our buffer. Right-click the location and click assemble as shown below.
 
 	<img src="Images/I22.png" width=600>
 
