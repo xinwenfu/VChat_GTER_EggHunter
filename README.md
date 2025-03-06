@@ -374,7 +374,6 @@ PAYLOAD = (
     b'C' * (400 - 135 - 4 - 5)
 )
 ```
- 
       * `b'GTER /.:/'`: We are overflowing the buffer of the **GTER** command.
       * `EGGHUNTER`: Remember that there is not enough space after the return address for the EggHunter shellcode. So we need to place it at the beginning of the buffer (after the command instruction!).
       * `b'A' * (143 - len(EGGHUNTER))`We need to overflow up but not including to the return address so we can overwrite it, this can be `A`'s as we used here or the NOP (`\x90`) instruction as used for the **GTER** overflow in ```step 5```. Since we have space taken up by the eggHunter's shellcode we do not want to overshoot our target and must take that into account!
