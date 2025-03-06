@@ -408,16 +408,16 @@ PAYLOAD = (
 	```
       * First we send the bind shellcode packet, this is so the "egg" is staged in memory for the EggHunter to find.
       * Next we send the EggHunter payload, once this is sent the EggHunter should start scanning the memory of our VChat process. Give this a few minuets and we should be able to connect to port 4444 on the target machine for a shell.
-3. Modify your exploit program&mdash;[exploit5.py](./SourceCode/exploit5.py)&mdash;and run it. You should see the following output.
+3. Modify your exploit program&mdash;[exploit5.py](./SourceCode/exploit5.py)&mdash;and run it. You should see somehting like the following output.
 
-	<img src="Images/I31.png" width=600>
+	<img src="Images/Final-Win11.png" width=600>
 
    * If you do not see this, the exploit may have failed. Restart VChat and try again!
    * This can be done against the VChat server attached to Immunity Debugger or against it as a standalone program. Due to resource limitations, we tended to run it detached from the Immunity Debugger.
 
 4.  We can use the command ```nc <IP> <Port>``` where the `<IP` is the Window machine's IP and `Port` is 4444 (Or whatever you generated the bind shellcode to have). This should connect to the server and acquire a shell as shown below.
 
-	<img src="Images/I32.png" width=600>
+	<img src="Images/Final-Kali.png" width=600>
 
 
 ## Attack Mitigation Table
