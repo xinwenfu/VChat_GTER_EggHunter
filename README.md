@@ -197,35 +197,25 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 		<img src="Images/exploit2.png" width=600>
 
 		* See that the EIP is a series of the value `0x42` this is a series of Bs. This tells us that we can write an address to that location in order to change the control flow of the target program.
-		* *Note:* It took a few runs for this to work and update on Immunity Debugger within the VirtualBox VM.
 
-7. (Optional) Use the [mona.py](https://github.com/corelan/mona) python program within Immunity Debugger to determine useful information about our target process. While the *cyclic pattern* from [exploit1.py](./SourceCode/exploit1.py) is in memory we can run the command ```!mona findmsp``` in the command line at the bottom of the Immunity Debugger GUI. **Note:** We must have sent the cyclic pattern and it must be present in the stack frame at the time we run this command!
+7. Open the `Executable Modules` window from the **views** tab in Immunity Debugger. This allows us to see the memory offsets of each dependency VChat uses. This will help inform us which `jmp esp` instruction we should pick, since we want to avoid any *Windows dynamic libraries* since their base addresses may vary between executions and Windows systems.
 
-	<img src="Images/I12.png" width=600>
+	<img src="Images/exeModules.png" width=600>
 
-      * We can see that the offset (Discovered with [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) earlier) is at the byte offset of `143`, the ESP has `23` bytes after jumping to the address in the ESP register, and the EBP is at the byte offset `139`.
-      * The most important thing we learned is that we have `24` bytes to work with! This is not much...  However, we know there are `144` Bytes of **free space** from the **start** to the **end** of our **buffer**!
-8. Open the `Executable Modules` window from the **views** tab in Immunity Debugger. This allows us to see the memory offsets of each dependency VChat uses. This will help inform us which `jmp esp` instruction we should pick, since we want to avoid any *Windows dynamic libraries* since their base addresses may vary between executions and Windows systems.
+8. Use the command *!mona jmp -r esp -cp nonull -o* in the Immunity Debugger's GUI command line to find some `jmp esp` instructions.
 
-	<img src="Images/I13.png" width=600>
-
-9. Use the command `!mona jmp -r esp -cp nonull -o` in the Immunity Debugger's GUI command line to find some `jmp esp` instructions.
-
-	<img src="Images/I14.png" width=600>
+	<img src="Images/jmpEsp.png" width=600>
 
       * The `-r esp` flag tells *mona.py* to search for the `jmp esp` instruction.
       * The `-cp nonull` flag tells *mona.py* to ignore null values.
       * The `-o` flag tells *mona.py* to ignore OS modules.
       * We can select any output from this.
+      * We can see there are nine possible `jmp esp` instructions in the essfunc DLL that we can use, any of the displayed options should work. We will use the last one, *625026D3*.
 
-	<img src="Images/I15.png" width=600>
-
-      * We can see there are nine possible `jmp esp` instructions in the essfunc DLL that we can use, any of the displayed options should work. We will use the last one, `0x6250151e`.
-
-10. Modify your exploit program to reflect the [exploit3.py](./SourceCode/exploit3.py) script, we use this to verify that the `jmp esp` address we inject works.
+9. Modify your exploit program&mdash;[exploit3.py](./SourceCode/exploit3.py), we use this to verify that the `jmp esp` address we inject works.
    1. Click on the black button highlighted below, and enter the address we decided in the previous step.
 
-		<img src="Images/I16.png" width=600>
+		<img src="Images/go2Addr.png" width=600>
 
    2. Set a breakpoint at the desired address (right-click).
 
