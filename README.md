@@ -217,26 +217,18 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 
 		<img src="Images/go2Addr.png" width=600>
 
-   2. Set a breakpoint at the desired address (right-click).
+   2. Set a breakpoint at the desired address (right-click on the desired *jmp esp* instruction) in the disassembly window.
 
-		<img src="Images/I17.png" width=600>
-
-   3. Run the [exploit3.py](./SourceCode/exploit3.py) program till an overflow occurs (See EIP/ESP and stack changes), you should be able to tell by the black text at the bottom the the screen that says `Breakpoint at ...`.
-
-		<img src="Images/I18.png" width=600>
-
+   3. Run [exploit3.py](./SourceCode/exploit3.py) till an overflow occurs (See EIP/ESP and stack changes), you should be able to tell by the black text at the bottom the the screen that says `Breakpoint at ...`.
          * Notice that the EIP now points to an essfunc.dll address!
 
-	4. Once the overflow occurs, click the *step into* button highlighted below.
+   4. Once the overflow occurs, click the *step over* button.
 
-		<img src="Images/I19.png" width=600>
-
-	5. Notice that we jumped to the stack we just overflowed!
-
-		<img src="Images/I20.png" width=600>
+   5. Notice that we jumped to the stack we just overflowed!
 
 
-Now that we have all the necessary parts for the creation of an exploit we will discuss what we have done so far (the **exploit.py** files), and how we can now expand our efforts to gain a shell in the target machine.
+Now that we have all the necessary parts for the creation of an exploit we will discuss what we have done so far, and how we can now expand our efforts to gain a shell in the target machine.
+
 ### Exploitation
 
 > [!IMPORTANT]
