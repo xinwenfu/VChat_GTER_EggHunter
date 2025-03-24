@@ -239,6 +239,22 @@ Now that we have all the necessary parts for the creation of an exploit we will 
 #### Unconditional Jump
 As we noted in the previous section, there are **only** *32* bytes of free space after the `jmp esp` instruction is executed. We *cannot* create shellcode that allows remote execution in that limited amount of space. However, we can place instructions in that small segment of memory that will enable us to use the *144* bytes of space allocated to the buffer we overflowed in order to overwrite the return address.
 
+```
+|                             |<- High address
+|-----------------------------|
+|                             |
+| 32B                         |
+|-----------------------------|<- ESP
+| Addr of jmp esp             |
+|-----------------------------|
+|                             |
+| 144B                        |
+|                             |
+|-----------------------------|
+|                             |<- Low address
+```
+
+
 1. We can use the [jump instruction](https://c9x.me/x86/html/file_module_x86_id_147.html) to perform an unconditional jump to an offset relative to the current JUMP instruction's address. The use of a relative offset for the jump is important as we are working within the stack, where addresses may change between calls during it's execution and between the times the process is executed.
 
 2. Perform the exploitation of VChat with [exploit3.py](./SourceCode/exploit3.py) as described in step `8` from the previous section.
