@@ -244,14 +244,14 @@ As we noted in the previous section, there are **only** *32* bytes of free space
 ```
 |                                            |<- High address
 |--------------------------------------------|
-| (32B)                                      |
+| 32B                                        |
 | jmp start-of-buffer                        |
 |--------------------------------------------|<- ESP
 | ret addr ( overwritten with addr of jmp esp|
 |--------------------------------------------|
-| (144B)                                     |
-| egghunter                                  |
-| GTER /.:/                                  |
+| 144B                                       |
+| (egghunter) (nop sled)                     |
+| (GTER /.:/) (nop sled)                     |
 |--------------------------------------------|
 |                                            |<- Low address
 ```
