@@ -261,9 +261,9 @@ As we noted in the previous section, there are **only** *32* bytes of free space
 
 3. Scroll up to the start of the buffer we overflowed, we can find this by looking for where the `A`'s start, 00BCF921 in this example.
 
-4. We now want to overwrite the start of the `C` buffer with a `jmp` instruction to continue execution by jumping to the start of our buffer. Right-click the location and click assemble as shown below.
+4. We now want to overwrite the start of the `C` buffer with a `jmp` instruction to continue execution by jumping to the start of our buffer. Right-click the location and click *assemble*.
 
-5. Now enter the instruction `jmp 00EBF965` where `00EBF965` may be replaced with your own stack address.
+5. Now enter the instruction `jmp 00BDF921` where `00BDF921` may be replaced with your own stack address.
 
 6. Now we can see the newly assembled instruction and step into it to verify that it works!
 
