@@ -10,6 +10,9 @@ Not all buffer overflows are created equal. In this exploit, we will be faced wi
 
 We use this technique, as it allows us to circumnavigate space constraints on the stack by placing the small egg-hunting shellcode onto the stack, with the much larger exploit placed into another segment of memory in the program, such as the [heap](https://learn.microsoft.com/en-us/cpp/mfc/memory-management-heap-allocation?view=msvc-170) or another stack segment where we have sufficient space.
 
+## Vieo Demo
+[![Video demo](https://img.youtube.com/vi/u7qeSoG3uhI/mqdefault.jpg)](https://youtu.be/u7qeSoG3uhI)
+
 ## EggHunting What is it
 EggHunters are delicate applications. They are designed to be small and *safely* search the *entire* virtual memory region allocated to a process [1]. As they are scanning the entire address space of a program, there are a number of ways the EggHunter could crash the process. The first and most apparent reason the egg hunter could crash the process is an attempt to dereference an address that points to an unallocated region of memory. Hence, safety and reliability are a major concern when creating an egg hunter.
 
