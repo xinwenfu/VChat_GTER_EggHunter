@@ -242,18 +242,18 @@ Now that we have all the necessary parts for the creation of an exploit we will 
 As we noted in the previous section, there are **only** *32* bytes of free space after the `jmp esp` instruction is executed. We *cannot* create shellcode that allows remote execution in that limited amount of space. However, we can place instructions in that small segment of memory that will enable us to use the *144* bytes of space allocated to the buffer we overflowed in order to overwrite the return address.
 
 ```
-|                             |<- High address
-|-----------------------------|
-|                             |
-| 32B                         |
-|-----------------------------|<- ESP
-| Addr of jmp esp             |
-|-----------------------------|
-|                             |
-| 144B                        |
-|                             |
-|-----------------------------|
-|                             |<- Low address
+|                                            |<- High address
+|--------------------------------------------|
+| (32B)                                      |
+| jmp start-of-buffer                        |
+|--------------------------------------------|<- ESP
+| ret addr ( overwritten with addr of jmp esp|
+|--------------------------------------------|
+| (144B)                                     |
+| egghunter                                  |
+| GTER /.:/                                  |
+|--------------------------------------------|
+|                                            |<- Low address
 ```
 
 
