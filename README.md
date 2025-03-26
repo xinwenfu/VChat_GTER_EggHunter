@@ -70,7 +70,7 @@ Compile VChat and its dependencies if they have not already been compiled. This 
 	
 ## Exploit Process
 
-### Information Collecting
+### Step 1. Information Collecting
 We want to understand the VChat program and how it works in order to effectively exploit it. Before diving into the specific of how VChat behaves the most important information for us is the IP address of the Windows VM that runs VChat and the port number that VChat runs on.
 
 1. **Windows** Launch the VChat application.
@@ -109,7 +109,7 @@ We want to understand the VChat program and how it works in order to effectively
 ### Dynamic Analysis
 This exploitation phase is where we launch the target application or binary and examine its behavior based on the input we provide. We can do this both using automated fuzzing tools and manually generated inputs. We do this to discover how we can construct a payload to modify VChat's behavior. We want to construct an attack string as follows: `egghunter-shellcode|address-to-overwrite-return-address`, where | means concatenation. Therefore, we need to know how many bytes are required in order to properly pad and align our overflow to overwrite critical sections of data.
 
-#### Launch VChat
+#### Step 2. Launch VChat
 1. Open Immunity Debugger
 
 	<img src="Images/I1.png" width=800>
@@ -144,7 +144,7 @@ This exploitation phase is where we launch the target application or binary and 
 
 	<img src="Images/I3-4.png" width=800>
 
-#### Fuzzing
+#### Step 3. Fuzzing
 We use [boofuzz](https://boofuzz.readthedocs.io/en/stable/index.html) for fuzzing, in which methodologically generated random data is injected into the target. It is hoped that the random data will cause the target to perform erratically, for example, crash. If that happens, bugs are found in the target.
 
 1. Open a terminal on the **Kali Linux Machine**.
@@ -175,7 +175,7 @@ python boofuzz-vchat-GTER.py
 
 I do feel it is a bit hard to identify which string actually crashes VChat. It appears even after VChat crashes, its port is still open, maybe because it takes time for the OS to clean the crashed VChat. In this case, it appears two test cases may crash VChat. Take a guess then and try!
 
-#### Further Analysis
+#### Step 4. Find size of padding to overflow the buffer 
 1. **Generate a Cyclic Pattern**. We do this so we can tell *where exactly* the return address is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the register which will be a subset of the generated string after a crash, we can tell where in memory the return address is stored.
 	```sh
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 400
@@ -198,10 +198,12 @@ I do feel it is a bit hard to identify which string actually crashes VChat. It a
 
 		* See that the EIP is a series of the value `0x42` this is a series of Bs. This tells us that we can write an address to that location in order to change the control flow of the target program.
 
+
 7. Open the `Executable Modules` window from the **views** tab in Immunity Debugger. This allows us to see the memory offsets of each dependency VChat uses. This will help inform us which `jmp esp` instruction we should pick, since we want to avoid any *Windows dynamic libraries* since their base addresses may vary between executions and Windows systems.
 
 	<img src="Images/exeModules.png" width=600>
 
+#### Step 5. Find address of jmp esp 
 8. Use the command *!mona jmp -r esp -cp nonull -o* in the Immunity Debugger's GUI command line to find some `jmp esp` instructions.
 
 	<img src="Images/jmpEsp.png" width=600>
@@ -236,7 +238,7 @@ Now that we have all the necessary parts for the creation of an exploit we will 
 > [!IMPORTANT]
 > Addresses and offsets may vary!
 
-#### Unconditional Jump
+#### Step 6. Unconditional Jump
 As we noted in the previous section, there are **only** *32* bytes of free space after the `jmp esp` instruction is executed. We *cannot* create shellcode that allows remote execution in that limited amount of space. However, we can place instructions in that small segment of memory that will enable us to use the *144* bytes of space allocated to the buffer we overflowed in order to overwrite the return address.
 
 ```
@@ -272,7 +274,7 @@ As we noted in the previous section, there are **only** *32* bytes of free space
 
 8. Run the [exploit4.py](./SourceCode/exploit4.py) with the breakpoint set at `jmp esp`. Follow the flow of execution using the *step into* button and make sure we jump to the start of 'A's as expected. That is, after hitting the `jmp esp` breakpoint and clicking the *step over* button *once* you should see the short unconditional `jmp` instruction as shown below. Once you step over the new `jmp` instruction, we should see the start of the buffer.
 
-#### EggHunter Shellcode Generation
+#### Step 7. EggHunter Shellcode Generation
 Now that we can jump to the start of the buffer, we can make the *EggHunter* Shellcode that will be executed on our system to locate the *egg* our reverse shell.
 
 <details>
@@ -311,7 +313,7 @@ EGGHUNTER += b"\xff\xe7"
 > [!IMPORTANT]
 >  The location of the *egghunter.txt* file may change from system to system! You can also use the command `!mona config -set workingfolder C:\logs\E2` to set the folder our output will be saved to.
 
-#### Bind Shellcode Generation and Exploit Setup
+#### Step 8. Bind Shellcode Generation and Exploit Setup
 Up until this point in time,  we have been performing [Denial of Service](https://attack.mitre.org/techniques/T0814/) (DoS) attacks. Since we simply overflowed the stack with what is effectively garbage address values (a series of `A`s, `B`s, and `C`s), all we have done with our exploits is crash the VChat server directly or indirectly after our jump instructions lead to an invalid operation. Now, we have all the information necessary to control the flow of VChat's execution, allowing us to inject [Shellcode](https://www.sentinelone.com/blog/malicious-input-how-hackers-use-shellcode/) and perform a more meaningful attack.
 
 1. We also need a bind shell. This is a program that listens for connections on the target machine and provides a shell to anyone that makes a tcp connection to the port it is listening on. We can generate the shellcode with the following command.
@@ -400,7 +402,7 @@ PAYLOAD = (
 >
 > ![alt text](Images/Crash-image.png)
 
-#### Debugger Verification and Final Exploitation
+#### Step 9. Debugger Verification and Final Exploitation
 
 1. Organize your exploit code as shown in [exploit5.py](./SourceCode/exploit5.py). Here, the discussion will mainly focus on the order in which we send the payloads.
 	```py
@@ -434,7 +436,7 @@ PAYLOAD = (
 	<img src="Images/Final-Kali.png" width=600>
 
 
-## Attack Mitigation Table
+## Step 10. Attack Mitigation Table
 In this section, we will discuss the effects a variety of defenses would have on *this specific attack* on the VChat server; specifically we will be discussing their impact on a buffer overflow that directly overwrites a return address and attempts to execute shellcode that has been written to the stack in order to discover a larger section of shellcode that has been placed elsewhere in the program's virtual address space. We will make a note where that these mitigations may be bypassed.
 
 First we will examine the effects individual defenses have on this exploit, and then we will examine the effects a combination of these defenses would have on the VChat exploit.
