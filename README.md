@@ -250,7 +250,7 @@ As we noted in the previous section, there are **only** *32* bytes of free space
 | 32B                                        |
 | jmp start-of-buffer                        |
 |--------------------------------------------|<- ESP
-| ret addr ( overwritten with addr of jmp esp|
+| ret addr (overwritten with addr of jmp esp)|
 |--------------------------------------------|
 | 144B                                       |
 | (egghunter) (nop sled)                     |
