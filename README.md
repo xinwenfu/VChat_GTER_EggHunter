@@ -279,7 +279,7 @@ As we noted in the previous section, there are **only** *32* bytes of free space
 9. Run the [exploit4.py](./SourceCode/exploit4.py) with the breakpoint set at `jmp esp`. Follow the flow of execution using the *step into* button and make sure we jump to the start of 'A's as expected. That is, after hitting the `jmp esp` breakpoint and clicking the *step over* button *once* you should see the short unconditional `jmp` instruction as shown below. Once you step over the new `jmp` instruction, we should see the start of the buffer.
 
 #### Step 7. EggHunter Shellcode Generation
-Now that we can jump to the start of the buffer, we can make the *EggHunter* Shellcode that will be executed on our system to locate the *egg* our reverse shell.
+Now that we can jump to the start of the buffer, we can make the *EggHunter* Shellcode that will be executed on our system to locate the *egg* in our shell.
 
 <details>
 > [!NOTE]
