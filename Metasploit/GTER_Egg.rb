@@ -42,7 +42,7 @@ class MetasploitModule < Msf::Exploit::Remote	# This is a remote exploit module 
       [
         [ 'EssFuncDLL-JMPESP',
           {
-            'jmpesp' => 0x62501023 # This will be available in [target['jmpesp']]
+            'jmpesp' => 0x625026D3 # This will be available in [target['jmpesp']]
           }
         ]
       ],
